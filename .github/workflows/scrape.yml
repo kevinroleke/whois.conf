@@ -1,0 +1,44 @@
+name: Scrape Data
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: "0 * */1 * *"
+env:
+    CONF: "whois.conf"
+    THRESHOLD: 1000
+jobs:
+    scrape:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
+              with:
+                python-version: '3.13'
+            - name: Get and set current CSV file line count
+              id: lc
+              run: echo ::set-output name=line_count::$(wc -l < "$CONF")
+            - name: Run scraper
+              run: python scrape_iana.py
+            - name: Check newly generated line count
+              run: |
+                  upper_lc=$(( ${{ steps.lc.outputs.line_count }} + THRESHOLD ))
+                  lower_lc=$(( ${{ steps.lc.outputs.line_count }} - THRESHOLD ))
+                  new_line_count=$(wc -l < "$CONF")
+
+                  echo "INFO: No. of new lines: $new_line_count vs. No. of current lines: ${{ steps.lc.outputs.line_count }}."
+                  if (( new_line_count < lower_lc || new_line_count > upper_lc )); then
+                    echo "WARNING: drastic line change, please verify and generated the CSV manually."
+                    exit 1
+                  fi
+#            - name: Commit changes
+#              if: ${{ success() }}
+#              uses: EndBug/add-and-commit@v9
+#              with:
+#                  add: "${{ env.CONF }}"
+#                  pull: "--rebase --autostash ."
+#                  message: "chore(generated): update generated csv automatically"
+#                  default_author: github_actions
+            - name: Upload artifact
+              uses: actions/upload-artifact@v3
+              with:
+                  path: $CONF
