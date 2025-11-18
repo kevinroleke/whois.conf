@@ -2,6 +2,7 @@
 
 import requests
 from bs4 import BeautifulSoup
+import multiprocessing
 
 IANA_URL = "https://www.iana.org"
 IANA_ROOT_DB_URL = f"{IANA_URL}/domains/root/db"
@@ -19,26 +20,37 @@ def get_tld_list():
     soup = BeautifulSoup(r.content, 'html.parser')
     tlds = []
     for link in soup.select(".domain.tld a"):
+        href = link['href']
         tlds.append((
-            link.text,
-            link['href'],
+            href.split('/')[len(href.split('/'))-1],
+            href,
         ))
     return tlds
 
+def process_tld(inp):
+    tld = inp[0]
+    tld_page = inp[1]
+    whois_server = get_tld_whois_server(tld_page)
+    if whois_server is None:
+        print(f"[!] No whois server found for {tld}")
+        return None
+    regex = f"\\{tld}$ {whois_server}"
+    print(f"[*] Found whois server for {tld}: {whois_server}")
+    return regex
+
 def compile_list():
-    conf = []
-    for tld, tld_page in get_tld_list():
-        whois_server = get_tld_whois_server(tld_page)
-        if whois_server is None:
-            print(f"[!] No whois server found for {tld}")
-            continue
-        regex = f"\\{tld}$ {whois_server}"
-        conf.append(regex)
-        print(f"[*] Found whois server for {tld}: {whois_server}")
+    tlds = get_tld_list()
+    pool = multiprocessing.Pool(processes=16)
+    conf = pool.map(process_tld, tlds)
+    pool.close()
+    pool.join()
+
     with open('whois.conf', 'w') as f:
         for line in conf:
+            if line is None:
+                continue
             print(line)
-            f.writeline(line)
+            f.write(line + "\n")
 
 if __name__ == '__main__':
     compile_list()
