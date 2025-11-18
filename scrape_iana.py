@@ -22,7 +22,7 @@ def get_tld_list():
     for link in soup.select(".domain.tld a"):
         href = link['href']
         tlds.append((
-            href.split('/')[len(href.split('/'))-1],
+            href.split('/')[len(href.split('/'))-1].split('.')[0],
             href,
         ))
     return tlds
@@ -40,7 +40,7 @@ def process_tld(inp):
 
 def compile_list():
     tlds = get_tld_list()
-    pool = multiprocessing.Pool(processes=16)
+    pool = multiprocessing.Pool(processes=32)
     conf = pool.map(process_tld, tlds)
     pool.close()
     pool.join()
