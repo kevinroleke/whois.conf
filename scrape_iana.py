@@ -34,7 +34,7 @@ def process_tld(inp):
     if whois_server is None:
         print(f"[!] No whois server found for {tld}")
         return None
-    regex = f"\\{tld}$ {whois_server}"
+    regex = f"\\.{tld}$ {whois_server}"
     print(f"[*] Found whois server for {tld}: {whois_server}")
     return regex
 
