@@ -12,8 +12,8 @@ def get_tld_whois_server(link):
     soup = BeautifulSoup(r.content, 'html.parser')
     tag = soup.find("b", string="WHOIS Server:")
     if tag is None:
-        return None
-    return tag.next_sibling.strip() or None
+        return None, b'RDAP' in r.content
+    return tag.next_sibling.strip() or None, b'RDAP' in r.content
 
 def get_tld_list():
     r = requests.get(IANA_ROOT_DB_URL)
@@ -30,10 +30,13 @@ def get_tld_list():
 def process_tld(inp):
     tld = inp[0]
     tld_page = inp[1]
-    whois_server = get_tld_whois_server(tld_page)
+    whois_server, rdap = get_tld_whois_server(tld_page)
     if whois_server is None:
-        print(f"[!] No whois server found for {tld}")
-        return None
+        if not rdap:
+            print(f"[!] No whois server found for {tld}")
+            return None
+        else:
+            whois_server = 'whois-to-rdap.zerogon.consulting'
     regex = f"\\.{tld}$ {whois_server}"
     print(f"[*] Found whois server for {tld}: {whois_server}")
     return regex
