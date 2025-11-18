@@ -15,14 +15,14 @@ jobs:
             - run: pip install -r requirements.txt
             - name: Run scraper
               run: python scrape_iana.py
-#            - name: Commit changes
-#              if: ${{ success() }}
-#              uses: EndBug/add-and-commit@v9
-#              with:
-#                  add: "${{ env.CONF }}"
-#                  pull: "--rebase --autostash ."
-#                  message: "chore(generated): update generated csv automatically"
-#                  default_author: github_actions
+            - name: Commit changes
+              if: ${{ success() }}
+              uses: EndBug/add-and-commit@v9
+              with:
+                  add: "${{ env.CONF }}"
+                  pull: "--rebase --autostash ."
+                  message: "chore(generated): update generated csv automatically"
+                  default_author: github_actions
             - name: Upload artifact
               uses: actions/upload-artifact@v5
               with:
