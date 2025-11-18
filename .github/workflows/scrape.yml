@@ -15,6 +15,7 @@ jobs:
               with:
                 python-version: '3.13'
                 cache: 'pip'
+            - run: pip install -r requirements.txt
             - name: Run scraper
               run: python scrape_iana.py
 #            - name: Commit changes
