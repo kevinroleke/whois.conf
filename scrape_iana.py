@@ -1,6 +1,7 @@
 #!.env/bin/python3
 
 import requests
+import datetime
 from bs4 import BeautifulSoup
 import multiprocessing
 
@@ -49,6 +50,7 @@ def compile_list():
     pool.join()
 
     with open('whois.conf', 'w') as f:
+        f.write(f"# {datetime.datetime.now()}\n")
         for line in conf:
             if line is None:
                 continue
